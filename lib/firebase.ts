@@ -1,0 +1,29 @@
+import { initializeApp, getApps } from 'firebase/app'
+import { getAuth } from 'firebase/auth'
+import { getFirestore } from 'firebase/firestore'
+
+// Your Firebase config object goes here
+const firebaseConfig = {
+  // Add your Firebase config object here
+  // Example structure:
+  // apiKey: "your-api-key",
+  // authDomain: "your-project.firebaseapp.com",
+  // projectId: "your-project-id",
+  // storageBucket: "your-project.appspot.com",
+  // messagingSenderId: "123456789",
+  // appId: "your-app-id"
+}
+
+// Initialize Firebase for client-side usage
+let app
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig)
+} else {
+  app = getApps()[0]
+}
+
+// Initialize Firebase services
+export const auth = getAuth(app)
+export const db = getFirestore(app)
+
+export default app 
