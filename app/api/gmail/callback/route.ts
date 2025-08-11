@@ -17,18 +17,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No authorization code provided' }, { status: 400 })
     }
 
-    const tokens = await oauth2Client.getToken(code)
+    const { tokens } = await oauth2Client.getToken(code)
+    oauth2Client.setCredentials(tokens)
 
     // Store tokens securely (in production, use encrypted storage)
     const cookieStore = cookies()
-    cookieStore.set('gmail_access_token', tokens.tokens.access_token || '', {
+    cookieStore.set('gmail_access_token', tokens.access_token || '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 3600 // 1 hour
     })
 
-    if (tokens.tokens.refresh_token) {
-      cookieStore.set('gmail_refresh_token', tokens.tokens.refresh_token, {
+    if (tokens.refresh_token) {
+      cookieStore.set('gmail_refresh_token', tokens.refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 30 * 24 * 60 * 60 // 30 days
