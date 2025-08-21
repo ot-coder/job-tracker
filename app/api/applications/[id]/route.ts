@@ -3,13 +3,14 @@ import { getAdminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
-const db = getAdminDb()
+// Lazily acquire Firestore within each handler
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const db = getAdminDb()
     const { id } = params
     const data = await request.json()
 
@@ -32,6 +33,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const db = getAdminDb()
     const { id } = params
     await db.collection('applications').doc(id).delete()
 

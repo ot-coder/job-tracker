@@ -3,10 +3,11 @@ import { getAdminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
-const db = getAdminDb()
+// Lazily acquire Firestore within each handler
 
 export async function GET() {
   try {
+    const db = getAdminDb()
     const applicationsRef = db.collection('applications')
     const snapshot = await applicationsRef.orderBy('applicationDate', 'desc').get()
 
@@ -47,6 +48,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const db = getAdminDb()
     const data = await request.json()
 
     const applicationData = {

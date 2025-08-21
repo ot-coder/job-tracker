@@ -3,13 +3,14 @@ import { getAdminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
-const db = getAdminDb()
+// Initialize Firestore lazily within the handler to avoid build-time execution
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const db = getAdminDb()
     const { id } = params
 
     const updateData = {
