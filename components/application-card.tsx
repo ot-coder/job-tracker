@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MoreHorizontal, Calendar, Building, User, Edit3 } from 'lucide-react'
+import { MoreHorizontal, Calendar, Building, User, Edit3, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -28,12 +28,27 @@ interface ApplicationCardProps {
   getStatusColor: (status: string) => string
 }
 
-export function ApplicationCard({ 
-  application, 
-  onUpdateStatus, 
-  getStatusIcon, 
-  getStatusColor 
+export function ApplicationCard({
+  application,
+  onUpdateStatus,
+  getStatusIcon,
+  getStatusColor
 }: ApplicationCardProps) {
+  const formatDateUTC = (dateString: string) => {
+    const date = new Date(dateString)
+    const year = date.getUTCFullYear()
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(date.getUTCDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  const daysSince = (dateString: string) => {
+    const date = new Date(dateString)
+    const startUTC = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+    const now = new Date()
+    const nowUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    return Math.floor((nowUTC - startUTC) / (1000 * 60 * 60 * 24))
+  }
   const [isEditing, setIsEditing] = useState(false)
   const [editStatus, setEditStatus] = useState(application.status)
   const [editNotes, setEditNotes] = useState(application.notes || '')
@@ -49,9 +64,7 @@ export function ApplicationCard({
     setIsEditing(false)
   }
 
-  const daysSinceApplication = Math.floor(
-    (new Date().getTime() - new Date(application.applicationDate).getTime()) / (1000 * 60 * 60 * 24)
-  )
+  const daysSinceApplication = daysSince(application.applicationDate)
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -74,7 +87,7 @@ export function ApplicationCard({
               </span>
               <span className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                Applied {new Date(application.applicationDate).toLocaleDateString()}
+                Applied {formatDateUTC(application.applicationDate)}
               </span>
               <span className="text-gray-500">
                 {daysSinceApplication} days ago
@@ -96,7 +109,7 @@ export function ApplicationCard({
           </DropdownMenu>
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         {isEditing ? (
           <div className="space-y-4">
@@ -116,7 +129,7 @@ export function ApplicationCard({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-sm font-medium">Notes</label>
               <Textarea
@@ -126,7 +139,7 @@ export function ApplicationCard({
                 rows={3}
               />
             </div>
-            
+
             <div className="flex gap-2">
               <Button onClick={handleSave} size="sm">
                 Save Changes
@@ -145,9 +158,9 @@ export function ApplicationCard({
                 </p>
               </div>
             )}
-            
+
             <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>Last updated: {new Date(application.lastUpdate).toLocaleDateString()}</span>
+              <span>Last updated: {formatDateUTC(application.lastUpdate)}</span>
               {application.emailId && (
                 <Badge variant="outline" className="text-xs">
                   <Mail className="w-3 h-3 mr-1" />
@@ -155,7 +168,7 @@ export function ApplicationCard({
                 </Badge>
               )}
             </div>
-            
+
             {application.status === 'ghosted' && (
               <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                 <p className="text-sm text-orange-800">

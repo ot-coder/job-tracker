@@ -193,7 +193,7 @@ export default function JobTracker() {
                   <div key={app.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
                     <div>
                       <p className="font-medium">{app.position} at {app.company}</p>
-                      <p className="text-sm text-gray-600">Applied {new Date(app.applicationDate).toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-600">Applied {new Date(app.applicationDate).toISOString().split('T')[0]}</p>
                     </div>
                     <Button
                       size="sm"
