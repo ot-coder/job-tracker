@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { initializeApp, getApps, cert } from 'firebase-admin/app'
-import { getFirestore } from 'firebase-admin/firestore'
+import { getAdminDb } from '@/lib/firebase-admin'
 
-// Initialize Firebase Admin
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  })
-}
+export const dynamic = 'force-dynamic'
 
-const db = getFirestore()
+const db = getAdminDb()
 
 export async function POST(
   request: NextRequest,
@@ -21,7 +11,7 @@ export async function POST(
 ) {
   try {
     const { id } = params
-    
+
     const updateData = {
       status: 'waiting',
       followUpDate: new Date().toISOString(),
@@ -30,7 +20,7 @@ export async function POST(
     }
 
     await db.collection('applications').doc(id).update(updateData)
-    
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error marking follow-up:', error)

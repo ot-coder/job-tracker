@@ -67,7 +67,7 @@ export default function JobTracker() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(applicationData)
       })
-      
+
       if (response.ok) {
         await loadApplications()
         setShowAddForm(false)
@@ -84,7 +84,7 @@ export default function JobTracker() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, notes })
       })
-      
+
       if (response.ok) {
         await loadApplications()
       }
@@ -98,7 +98,7 @@ export default function JobTracker() {
       const response = await fetch(`/api/applications/${id}/follow-up`, {
         method: 'POST'
       })
-      
+
       if (response.ok) {
         await loadApplications()
       }
@@ -160,8 +160,8 @@ export default function JobTracker() {
               <p className="text-gray-600 mt-2">Track and manage your job applications in one place</p>
             </div>
             <div className="flex gap-3">
-              <GmailSync 
-                connected={gmailConnected} 
+              <GmailSync
+                connected={gmailConnected}
                 onSync={loadApplications}
                 onConnectionChange={setGmailConnected}
               />
@@ -195,8 +195,8 @@ export default function JobTracker() {
                       <p className="font-medium">{app.position} at {app.company}</p>
                       <p className="text-sm text-gray-600">Applied {new Date(app.applicationDate).toLocaleDateString()}</p>
                     </div>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => handleFollowUp(app.id)}
                     >

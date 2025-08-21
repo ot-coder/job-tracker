@@ -1,21 +1,11 @@
 import { NextResponse } from 'next/server'
 import { google } from 'googleapis'
 import { cookies } from 'next/headers'
-import { initializeApp, getApps, cert } from 'firebase-admin/app'
-import { getFirestore } from 'firebase-admin/firestore'
+import { getAdminDb } from '@/lib/firebase-admin'
 
-// Initialize Firebase Admin
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  })
-}
+export const dynamic = 'force-dynamic'
 
-const db = getFirestore()
+const db = getAdminDb()
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -118,7 +108,7 @@ export async function POST() {
         const fullText = `${subject} ${body}`.toLowerCase()
 
         // Check if this looks like a job application email
-        const isJobApplication = JOB_APPLICATION_KEYWORDS.some(keyword => 
+        const isJobApplication = JOB_APPLICATION_KEYWORDS.some(keyword =>
           fullText.includes(keyword.toLowerCase())
         )
 
@@ -174,10 +164,10 @@ export async function POST() {
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       newApplications,
-      totalMessages: messages.length 
+      totalMessages: messages.length
     })
   } catch (error) {
     console.error('Error syncing Gmail:', error)

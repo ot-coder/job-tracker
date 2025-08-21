@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { initializeApp, getApps, cert } from 'firebase-admin/app'
-import { getFirestore } from 'firebase-admin/firestore'
+import { getAdminDb } from '@/lib/firebase-admin'
 
-// Initialize Firebase Admin
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  })
-}
+export const dynamic = 'force-dynamic'
 
-const db = getFirestore()
+const db = getAdminDb()
 
 export async function GET() {
   try {
@@ -23,7 +13,12 @@ export async function GET() {
     const applications = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }))
+    })) as Array<{
+      id: string
+      status: string
+      applicationDate: string
+      [key: string]: any
+    }>
 
     // Check for applications that should be marked as ghosted
     const twoWeeksAgo = new Date()
