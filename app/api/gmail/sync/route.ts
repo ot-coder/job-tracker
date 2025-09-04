@@ -65,6 +65,32 @@ const INTERVIEW_KEYWORDS = [
   'discuss your application further'
 ]
 
+// Exclusions to avoid generic job alerts (e.g., from LinkedIn) while
+// preserving real application confirmations from LinkedIn
+const EXCLUDED_SENDER_DOMAINS = [
+  'linkedin.com',
+]
+
+const EXCLUDED_SUBJECT_KEYWORDS = [
+  'job alert',
+  'job recommendation',
+  'recommended jobs',
+  'jobs for you',
+  'new jobs for you',
+  'hiring in your network',
+  'top jobs',
+]
+
+// Allowlist for LinkedIn application confirmations
+const LINKEDIN_APPLICATION_KEYWORDS = [
+  'application sent',
+  'you applied',
+  'your application has been submitted',
+  // German variants
+  'bewerbung gesendet',
+  'ihre bewerbung wurde gesendet',
+]
+
 export async function POST() {
   try {
     const cookieStore = cookies()
@@ -146,6 +172,20 @@ export async function POST() {
         const body = collectText(payload)
 
         const fullText = `${subject} ${body}`.toLowerCase()
+
+        // Exclude generic job alerts from specific senders (e.g., LinkedIn),
+        // but keep if it's a real application confirmation
+        const fromLower = from.toLowerCase()
+        const isFromExcludedDomain = EXCLUDED_SENDER_DOMAINS.some(domain => fromLower.includes(domain))
+        const looksLikeLinkedInApp = LINKEDIN_APPLICATION_KEYWORDS.some(k => fullText.includes(k))
+        const looksLikeGenericAlert = EXCLUDED_SUBJECT_KEYWORDS.some(k => subject.toLowerCase().includes(k))
+
+        if (isFromExcludedDomain && !looksLikeLinkedInApp) {
+          // If it's a generic alert, skip
+          if (looksLikeGenericAlert) {
+            continue
+          }
+        }
 
         // Check if this looks like a job application email
         const isJobApplication = JOB_APPLICATION_KEYWORDS.some(keyword =>
