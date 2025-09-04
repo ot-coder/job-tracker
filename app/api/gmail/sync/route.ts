@@ -26,7 +26,14 @@ const JOB_APPLICATION_KEYWORDS = [
   'your resume has been received',
   'thank you for submitting',
   'working student',
-  'werkstudent'
+  'werkstudent',
+  // German confirmations
+  'vielen dank für ihre bewerbung',
+  'herzlichen dank für ihre bewerbung',
+  'wir werden uns schnellstmöglich wieder mit ihnen kontakt aufnehmen',
+  'wir werden uns so schnell wie möglich bei ihnen melden',
+  'ihre bewerbung für die position',
+  'bewerbung eingegangen'
 ]
 
 // Keywords that indicate rejections
@@ -38,7 +45,13 @@ const REJECTION_KEYWORDS = [
   'will not be moving forward',
   'thank you for your interest, however',
   'we have decided not to proceed',
-  'position has been filled'
+  'position has been filled',
+  // German rejections
+  'leider mitteilen',
+  'andere kandidat',
+  'nicht weiter berücksichtigen',
+  'absage',
+  'unser feedback'
 ]
 
 // Keywords that indicate interview invitations
@@ -101,27 +114,36 @@ export async function POST() {
         const from = headers.find(h => h.name === 'From')?.value || ''
         const date = headers.find(h => h.name === 'Date')?.value || ''
 
-        // Helpers to decode Gmail base64url bodies and extract text from HTML
+        // Helpers to decode Gmail base64url bodies and extract text from nested parts
         const decodeBody = (data: string) => {
           const base64 = data.replace(/-/g, '+').replace(/_/g, '/')
           try { return Buffer.from(base64, 'base64').toString('utf-8') } catch { return '' }
         }
         const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ')
 
-        // Get email body (prefer text/plain, fallback to text/html)
-        let body = ''
-        const payload = messageData.data.payload
-        if (payload?.body?.data) {
-          body = decodeBody(payload.body.data)
-        } else if (payload?.parts) {
-          for (const part of payload.parts) {
-            if (part.mimeType === 'text/plain' && part.body?.data) {
-              body += decodeBody(part.body.data)
-            } else if (part.mimeType === 'text/html' && part.body?.data) {
-              body += stripHtml(decodeBody(part.body.data))
+        const collectText = (payload?: any): string => {
+          if (!payload) return ''
+          let text = ''
+          if (payload.body?.data) {
+            text += decodeBody(payload.body.data)
+          }
+          if (Array.isArray(payload.parts)) {
+            for (const part of payload.parts) {
+              if (part.mimeType === 'text/plain' && part.body?.data) {
+                text += decodeBody(part.body.data)
+              } else if (part.mimeType === 'text/html' && part.body?.data) {
+                text += stripHtml(decodeBody(part.body.data))
+              } else if (part.parts) {
+                text += collectText(part)
+              }
             }
           }
+          return text
         }
+
+        // Get email body (prefer text/plain, fallback to text/html)
+        const payload = messageData.data.payload
+        const body = collectText(payload)
 
         const fullText = `${subject} ${body}`.toLowerCase()
 
