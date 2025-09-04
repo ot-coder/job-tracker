@@ -24,7 +24,9 @@ const JOB_APPLICATION_KEYWORDS = [
   'we received your application',
   'application submitted successfully',
   'your resume has been received',
-  'thank you for submitting'
+  'thank you for submitting',
+  'working student',
+  'werkstudent'
 ]
 
 // Keywords that indicate rejections
