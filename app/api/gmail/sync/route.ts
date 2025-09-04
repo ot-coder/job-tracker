@@ -69,18 +69,24 @@ export async function POST() {
 
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client })
 
-    // Search for emails from the last 30 days
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-    const query = `after:${Math.floor(thirtyDaysAgo.getTime() / 1000)}`
+    // Search for emails from the last 30 days using Gmail search syntax
+    // Using newer_than avoids date parsing ambiguity (and epoch unsupported in Gmail search)
+    const query = `newer_than:30d`
 
-    const response = await gmail.users.messages.list({
-      userId: 'me',
-      q: query,
-      maxResults: 100
-    })
-
-    const messages = response.data.messages || []
+    let messages: { id?: string | null }[] = []
+    let pageToken: string | undefined
+    do {
+      const response = await gmail.users.messages.list({
+        userId: 'me',
+        q: query,
+        maxResults: 200,
+        pageToken
+      })
+      messages = messages.concat(response.data.messages || [])
+      pageToken = response.data.nextPageToken || undefined
+      // Safety cap to avoid excessive processing
+      if (messages.length >= 1000) break
+    } while (pageToken)
     let newApplications = 0
 
     for (const message of messages) {
@@ -95,14 +101,24 @@ export async function POST() {
         const from = headers.find(h => h.name === 'From')?.value || ''
         const date = headers.find(h => h.name === 'Date')?.value || ''
 
-        // Get email body
+        // Helpers to decode Gmail base64url bodies and extract text from HTML
+        const decodeBody = (data: string) => {
+          const base64 = data.replace(/-/g, '+').replace(/_/g, '/')
+          try { return Buffer.from(base64, 'base64').toString('utf-8') } catch { return '' }
+        }
+        const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ')
+
+        // Get email body (prefer text/plain, fallback to text/html)
         let body = ''
-        if (messageData.data.payload?.body?.data) {
-          body = Buffer.from(messageData.data.payload.body.data, 'base64').toString()
-        } else if (messageData.data.payload?.parts) {
-          for (const part of messageData.data.payload.parts) {
+        const payload = messageData.data.payload
+        if (payload?.body?.data) {
+          body = decodeBody(payload.body.data)
+        } else if (payload?.parts) {
+          for (const part of payload.parts) {
             if (part.mimeType === 'text/plain' && part.body?.data) {
-              body += Buffer.from(part.body.data, 'base64').toString()
+              body += decodeBody(part.body.data)
+            } else if (part.mimeType === 'text/html' && part.body?.data) {
+              body += stripHtml(decodeBody(part.body.data))
             }
           }
         }
